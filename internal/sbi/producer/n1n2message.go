@@ -205,6 +205,9 @@ func N1N2MessageTransferProcedure(ueContextID string, reqUri string,
 		// TODO: only support transfer N2 SM information now
 		if n2Info != nil {
 			smInfo := requestData.N2InfoContainer.SmInfo
+			if smInfo.SNssai.Sd == "112233" {
+				smInfo.SNssai.Sd = ""
+			}
 			switch smInfo.N2InfoContent.NgapIeType {
 			case models.NgapIeType_PDU_RES_SETUP_REQ:
 				ue.ProducerLog.Debugln("AMF Transfer NGAP PDU Session Resource Setup Request from SMF")

@@ -1029,6 +1029,7 @@ func BuildInitialContextSetupRequest(
 	allowedNSSAI := ie.Value.AllowedNSSAI
 
 	for _, allowedSnssai := range amfUe.AllowedNssai[anType] {
+		amfUe.RanUe[anType].Log.Info("2 -  Build message allowedSnssai ", *allowedSnssai.AllowedSnssai)
 		allowedNSSAIItem := ngapType.AllowedNSSAIItem{}
 		ngapSnssai := ngapConvert.SNssaiToNgap(*allowedSnssai.AllowedSnssai)
 		allowedNSSAIItem.SNSSAI = ngapSnssai

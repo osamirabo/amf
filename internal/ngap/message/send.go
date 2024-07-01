@@ -5,6 +5,7 @@ import (
 	"github.com/free5gc/amf/internal/logger"
 	"github.com/free5gc/amf/internal/sbi/producer/callback"
 	"github.com/free5gc/aper"
+	"github.com/free5gc/ngap/ngapConvert"
 	"github.com/free5gc/ngap/ngapType"
 	"github.com/free5gc/openapi/models"
 )
@@ -365,7 +366,23 @@ func SendInitialContextSetupRequest(
 		return
 	}
 
-	amfUe.RanUe[anType].Log.Info("Send Initial Context Setup Request")
+	amfUe.RanUe[anType].Log.Info("1 - Send Initial Context Setup Request")
+	//requestedNssai, err := nasConvert.RequestedNssaiToModels(amfUe.RanUe[anType].AmfUe.RegistrationRequest.RequestedNSSAI)
+	for _, requestedSnssai := range amfUe.AllowedNssai[anType] {
+		if requestedSnssai.AllowedSnssai.Sd == "112233" {
+			requestedSnssai.AllowedSnssai.Sd = ""
+			amfUe.RanUe[anType].Log.Info("2 - Send Initial Context Setup Request change request")
+		}
+	}
+	//
+	//registrationAccept.AllowedNSSAI = nasType.NewAllowedNSSAI(nasMessage.RegistrationAcceptAllowedNSSAIType)
+	// var buf []uint8
+	// for _, requestedSnssai := range requestedNssai {
+	// 	buf = append(buf, nasConvert.SnssaiToNas(*requestedSnssai.ServingSnssai)...)
+	// }
+	// amfUe.RanUe[anType].AmfUe.RegistrationRequest.RequestedNSSAI.SetLen(uint8(len(buf)))
+	// amfUe.RanUe[anType].AmfUe.RegistrationRequest.RequestedNSSAI.SetSNSSAIValue(buf)
+	// amfUe.RanUe[anType].Log.Info("Send Initial Context Setup Request")
 
 	if pduSessionResourceSetupRequestList != nil {
 		if len(pduSessionResourceSetupRequestList.List) > context.MaxNumOfPDUSessions {
@@ -1028,10 +1045,38 @@ func SendN2Message(
 
 	if !ranUe.InitialContextSetup && (ranUe.UeContextRequest ||
 		(pduSessionResourceSetupRequestList != nil && len(pduSessionResourceSetupRequestList.List) > 0)) {
+		if pduSessionResourceSetupRequestList != nil && len(pduSessionResourceSetupRequestList.List) > 0 {
+			for _, itemCxt := range pduSessionResourceSetupRequestList.List {
+				// var itemSU ngapType.PDUSessionResourceSetupItemSUReq
+				// itemSU.PDUSessionID = itemCxt.PDUSessionID
+				// itemSU.PDUSessionNASPDU = itemCxt.NASPDU
+				modelSnssai := ngapConvert.SNssaiToModels(itemCxt.SNSSAI)
+				if modelSnssai.Sd == "112233" {
+					modelSnssai.Sd = ""
+				}
+				ngapSnssai := ngapConvert.SNssaiToNgap(modelSnssai)
+				itemCxt.SNSSAI = ngapSnssai
+			}
+		}
 		SendInitialContextSetupRequest(amfUe, anType, nasPdu, pduSessionResourceSetupRequestList,
 			rrcInactiveTransitionReportRequest, coreNetworkAssistanceInfo, emergencyFallbackIndicator)
 	} else if ranUe.InitialContextSetup &&
 		(pduSessionResourceSetupRequestList != nil && len(pduSessionResourceSetupRequestList.List) > 0) {
+		//if (pduSessionResourceSetupRequestList != nil) && len(pduSessionResourceSetupRequestList.List) > 0 {
+		//ranUe.Log.Infof("OMarrrrrrrrrrrrrrrrrrrrrrrr")
+		for _, itemCxt := range pduSessionResourceSetupRequestList.List {
+			// var itemSU ngapType.PDUSessionResourceSetupItemSUReq
+			// itemSU.PDUSessionID = itemCxt.PDUSessionID
+			// itemSU.PDUSessionNASPDU = itemCxt.NASPDU
+			modelSnssai := ngapConvert.SNssaiToModels(itemCxt.SNSSAI)
+			//ranUe.Log.Info("OMarrrrrrrrrrrrrrrrrrrrrrrr ", modelSnssai)
+			if modelSnssai.Sd == "112233" {
+				modelSnssai.Sd = ""
+			}
+			ngapSnssai := ngapConvert.SNssaiToNgap(modelSnssai)
+			itemCxt.SNSSAI = ngapSnssai
+		}
+		//}
 		suList := ConvertPDUSessionResourceSetupListCxtReqToSUReq(pduSessionResourceSetupRequestList)
 		SendPDUSessionResourceSetupRequest(ranUe, nasPdu, suList)
 	} else {

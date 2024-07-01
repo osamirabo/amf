@@ -241,6 +241,12 @@ func CreatePDUSession(ulNasTransport *nasMessage.ULNASTransport,
 		}
 	}
 
+	ue.GmmLog.Infof("1 - Select SMF failed:")
+	if snssai.Sd == "" {
+		snssai.Sd = "112233"
+		ue.GmmLog.Infof("2 - Select SMF failed: snssai.Sd %s", snssai.Sd)
+	}
+
 	if ulNasTransport.DNN != nil {
 		dnn = ulNasTransport.DNN.GetDNN()
 	} else {
@@ -628,6 +634,7 @@ func HandleInitialRegistration(ue *context.AmfUe, anType models.AccessType) erro
 
 	// Registration with AMF re-allocation (TS 23.502 4.2.2.2.3)
 	if len(ue.SubscribedNssai) == 0 {
+		ue.GmmLog.Infoln("Handle InitialRegistration - ue.SubscribedNssai")
 		getSubscribedNssai(ue)
 	}
 
@@ -1103,9 +1110,14 @@ func handleRequestedNssai(ue *context.AmfUe, anType models.AccessType) error {
 		}
 
 		needSliceSelection := false
-		for _, requestedSnssai := range requestedNssai {
-			ue.GmmLog.Infof("RequestedNssai - ServingSnssai: %+v, HomeSnssai: %+v",
-				requestedSnssai.ServingSnssai, requestedSnssai.HomeSnssai)
+		for i_, requestedSnssai := range requestedNssai {
+			if requestedSnssai.ServingSnssai.Sd == "" {
+				requestedSnssai.ServingSnssai.Sd = "112233"
+			}
+
+			ue.GmmLog.Infof("-----------------------------------------------------------------------------------------------")
+			ue.GmmLog.Infof("%d, RequestedNssai - ServingSnssai: %+v, HomeSnssai: %+v",
+				i_, requestedSnssai.ServingSnssai, requestedSnssai.HomeSnssai)
 			if ue.InSubscribedNssai(*requestedSnssai.ServingSnssai) {
 				allowedSnssai := models.AllowedSnssai{
 					AllowedSnssai: &models.Snssai{
